@@ -1,0 +1,168 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextIndex", "fullTextSearch"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                          Int     @id @default(autoincrement()) @db.UnsignedMediumInt
+  appellation                 String  @db.TinyText
+  userName                    String  @db.TinyText
+  email                       String  @unique
+  password                    String  @db.TinyText
+  imgId                       String?
+  role                        Role    @default(USER)
+  verify                      Boolean @default(false)
+  firebaseCloudMessagingToken String? @db.TinyText
+
+  other       Json?
+  Form        Form[]
+  historyForm HistoryForm[]
+  isDoneMenu  Json?
+
+  menu         Menu[] @relation("authorMenu")
+  menuFavorite Menu[] @relation("favoriteUserMenu")
+
+  game         Game[] @relation("authorGame")
+  gameFavorite Game[] @relation("favoriteUserGame")
+
+  doctorId      Int?   @db.UnsignedMediumInt
+  doctor        User?  @relation("favoriteUsers", fields: [doctorId], references: [id])
+  favoriteUsers User[] @relation("favoriteUsers")
+
+  authorAssignment UserAssignment[] @relation("authorAssignment")
+  userAssignment   UserAssignment[] @relation("userAssignment")
+
+  @@fulltext([userName])
+}
+
+model Form {
+  id             Int           @id @default(autoincrement()) @db.UnsignedMediumInt
+  author         User          @relation(fields: [authorId], references: [id])
+  authorId       Int           @db.UnsignedMediumInt
+  formName       String
+  isSingleChoice Boolean
+  isRandomized   Boolean
+  questions      Json
+  correctAnswer  Json
+  key            Bytes         @db.TinyBlob
+  iv             Bytes         @db.TinyBlob
+  formCreateTime DateTime      @unique(sort: Desc) @default(now())
+  historyForm    HistoryForm[]
+
+  @@fulltext([formName])
+}
+
+model HistoryForm {
+  id                    Int      @id @default(autoincrement()) @db.UnsignedMediumInt
+  score                 Int      @db.TinyInt
+  user                  User     @relation(fields: [userId], references: [id])
+  userId                Int      @db.UnsignedMediumInt
+  formName              String
+  form                  Form     @relation(fields: [formId], references: [id])
+  formId                Int      @db.UnsignedMediumInt
+  // date                 DateTime @unique(sort: Desc) @default(now())
+  historyFormCreateTime DateTime @unique(sort: Desc) @default(now())
+  errorQuestionIndex    String
+  errorAnswerIndexs     String
+  formQuestAnswerIndex  String
+}
+
+model Menu {
+  id             Int      @id @default(autoincrement()) @db.UnsignedMediumInt
+  menuName       String
+  menuContent    String   @db.MediumText
+  menuUsageCount Int      @default(0) @db.UnsignedSmallInt
+  menuFavorite   Int      @default(0) @db.UnsignedSmallInt
+  game           Game[]
+  gameOrderId    Json
+  gameDifficulty Json
+  menuCreateTime DateTime @unique(sort: Desc) @default(now())
+  isPublic       Boolean  @default(false)
+  totalTime      Int      @db.UnsignedMediumInt // seconds unit
+
+  author         User?            @relation("authorMenu", fields: [authorId], references: [id])
+  authorId       Int?             @db.UnsignedMediumInt
+  favoriteUser   User[]           @relation("favoriteUserMenu")
+  userAssignment UserAssignment[]
+}
+
+model UserAssignment {
+  id        Int      @id @default(autoincrement()) @db.UnsignedMediumInt
+  startDate DateTime
+  endDate   DateTime
+  menu      Menu     @relation(fields: [menuId], references: [id])
+  menuId    Int      @db.UnsignedMediumInt
+  author    User     @relation("authorAssignment", fields: [authorId], references: [id])
+  authorId  Int      @db.UnsignedMediumInt
+  user      User[]   @relation("userAssignment")
+}
+
+model Game {
+  id             Int          @id @default(autoincrement()) @db.UnsignedMediumInt
+  gameName       String
+  gameContent    String       @db.MediumText
+  gameUsageCount Int          @default(0) @db.UnsignedSmallInt
+  gameFavorite   Int          @default(0) @db.UnsignedSmallInt
+  playTime       Int          @db.UnsignedSmallInt // seconds unit
+  classify       GameClassify @relation(fields: [gameClassifyId], references: [id])
+  imgId          String?
+  menu           Menu[]
+  gameCreateTime DateTime     @unique(sort: Desc) @default(now())
+  gameClassifyId Int          @db.UnsignedMediumInt
+
+  author           User?  @relation("authorGame", fields: [authorId], references: [id])
+  authorId         Int?   @db.UnsignedMediumInt
+  favoriteUserGame User[] @relation("favoriteUserGame")
+
+  @@fulltext([gameName])
+}
+
+model GameClassify {
+  id           Int     @id @default(autoincrement()) @db.UnsignedMediumInt
+  pecs         Boolean @default(false)
+  abs          Boolean @default(false)
+  obliques     Boolean @default(false)
+  hip_adductor Boolean @default(false)
+  quads        Boolean @default(false)
+  deltoids     Boolean @default(false)
+  biceps       Boolean @default(false)
+  adductor     Boolean @default(false)
+  traps        Boolean @default(false)
+  lats         Boolean @default(false)
+  triceps      Boolean @default(false)
+  glutes       Boolean @default(false)
+  hambooleans  Boolean @default(false)
+  calves       Boolean @default(false)
+  aerobic      Boolean @default(false)
+  anaerobic    Boolean @default(false)
+
+  game Game[]
+}
+
+enum Role {
+  USER
+  ADMIN
+  DOCTOR
+}
+
+// 初始化
+// npx prisma migrate dev --name init
+// 更新
+// npx prisma migrate dev
+// https://www.prisma.io/docs/concepts/database-connectors/mysql
+// 尋找 Json 資料
+// https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields/working-with-json-fields
+// 多DB
+// https://www.prisma.io/docs/guides/other/multi-schema
+// 優化
+// https://www.prisma.io/docs/guides/performance-and-optimization/query-optimization-performance
+
+// https://www.prisma.io/docs/concepts/components/prisma-schema/indexes

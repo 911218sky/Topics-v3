@@ -1,0 +1,12 @@
+{
+  "name": "我阿嬤都會用 ",
+  "version": "0.0.0",
+  "description": "◑‿◐",
+  "title": "Custom apiDoc browser title",
+  "template": {
+    "withCompare": true,
+    "withGenerator": true,
+    "showRequiredLabels": true,
+    "aloneDisplay": true
+  }
+}

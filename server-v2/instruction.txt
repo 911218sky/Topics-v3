@@ -1,0 +1,25 @@
+npx tsc --init
+npm install -g @vercel/ncc
+ncc build ./index.ts -o dist
+ncc build ./index.ts -o dist -m --v8-cache
+
+npm install -g apidoc
+apidoc -i ./src/ -o doc/
+
+npm install --save-exact esbuild
+esbuild ./src/index.ts --bundle --outfile=dist/index.js --platform=node --external:sharp --external:ws
+
+壓縮代碼 --minify
+esbuild ./src/index.ts --bundle --outfile=dist/index.js --platform=node --external:sharp --external:ws --minify
+
+
+https://larrylu.blog/nodejs-pm2-cluster-455ffbd7671
+npm install pm2 -g
+pm2 start -i 4 --name server dist/index.js 
+
+https://www.runoob.com/memcached/window-install-memcached.html
+memcached install
+memcached -d
+memcached -h
+
+pm2 delete server
